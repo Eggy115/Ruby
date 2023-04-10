@@ -18,7 +18,7 @@ This repository contains a collection of Ruby programs and scripts.
 - [Contributing](#contributing)
 - [License](#license)
 
-## What is Rust
+## What is Ruby
 
 Ruby is a dynamic, object-oriented programming language that is popular among developers for its simplicity and productivity. It was created in the mid-1990s by Yukihiro Matsumoto, and is known for its elegant syntax and expressive nature.
 
@@ -34,19 +34,19 @@ These are the general steps to install Ruby on different platforms. However, the
 
 #### Windows
 
-1. Download the Ruby installation executable from the official Rust website.
+1. Download the Ruby installation executable from the official Ruby website.
 2. Run the downloaded file and follow the installation instructions.
-3. Once the installation is complete, you can use any text editor or IDE (Integrated Development Environment) to write and compile Rust code.
+3. Once the installation is complete, you can use any text editor or IDE (Integrated Development Environment) to write and compile Ruby code.
 
 #### Linux
 
-1. Install Rust using the package manager for your Linux distribution. For example, on Ubuntu, you can use the following command:
+1. Install Ruby using the package manager for your Linux distribution. For example, on Ubuntu, you can use the following command:
 
 ```
 sudo apt-get install ruby
 ```
 
-2. Once Ruby is installed, you can use any text editor or IDE to write and compile Rust code.
+2. Once Ruby is installed, you can use any text editor or IDE to write and compile Ruby code.
 
 #### macOS
 
@@ -56,7 +56,7 @@ sudo apt-get install ruby
 brew install ruby
 ```
 
-2. Once Ruby is installed, you can use any text editor or IDE to write and compile Rust code.
+2. Once Ruby is installed, you can use any text editor or IDE to write and compile Ruby code.
 
 Alternatively, you can also download the Ruby installation package for macOS from the official Ruby website and follow the installation instructions.
 
