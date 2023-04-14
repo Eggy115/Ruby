@@ -1,63 +1,70 @@
 require 'vimrunner'
 require 'vimrunner/rspec'
+require 'vimrunner/server'
 
+# Explicitly enable usage of "should".
 RSpec.configure do |config|
-  # reset globals to default values before each test
-  config.before(:each) do
-    vim.command 'let g:ruby_indent_access_modifier_style = "normal"'
-    vim.command 'let g:ruby_indent_block_style = "do"'
-    vim.command 'let g:ruby_indent_assignment_style = "hanging"'
-    vim.command 'let g:ruby_indent_hanging_elements = 1'
-  end
+    config.expect_with(:rspec) { |c| c.syntax = :should }
 end
 
 Vimrunner::RSpec.configure do |config|
-  config.reuse_server = true
+  # Use a single Vim instance for the test suite. Set to false to use an
+  # instance per test (slower, but can be easier to manage).
+  # This requires using gvim, otherwise it hangs after a few tests.
+  config.reuse_server = ENV['VIMRUNNER_REUSE_SERVER'] == '1' ? true : false
 
   config.start_vim do
-    vim = Vimrunner.start_gvim
-    vim.prepend_runtimepath(File.expand_path('../..', __FILE__))
-    vim.add_plugin(File.expand_path('../vim', __FILE__), 'plugin/syntax_test.vim')
-    vim.set 'expandtab'
-    vim.set 'shiftwidth', 2
-    vim
-  end
+    exe = config.reuse_server ? Vimrunner::Platform.gvim : Vimrunner::Platform.vim
+    vimrc = File.expand_path("../vimrc", __FILE__)
+    vim = Vimrunner::Server.new(:executable => exe,
+                                :vimrc => vimrc).start
+    # More friendly killing.
+    # Otherwise profiling information might not be written.
+    def vim.kill
+      normal(':qall!<CR>')
 
-  def assert_correct_indenting(extension='rb', string)
-    filename = "test.#{extension}"
-
-    IO.write filename, string
-
-    vim.edit filename
-    vim.normal 'gg=G'
-    vim.write
-
-    expect(IO.read(filename)).to eq string
-  end
-
-  def assert_correct_indent_in_insert(extension='rb', content, input, result)
-    filename = "test.#{extension}"
-
-    IO.write filename, content
-
-    vim.edit filename
-    vim.normal 'Go'
-    vim.feedkeys input
-    vim.write
-
-    expect(IO.read(filename)).to eq result
-  end
-
-  def assert_correct_highlighting(extension='rb', string, patterns, group)
-    filename = "test.#{extension}"
-
-    IO.write filename, string
-
-    vim.edit filename
-
-    Array(patterns).each do |pattern|
-      # TODO: add a custom matcher
-      expect(vim.echo("TestSyntax('#{pattern}', '#{group}')")).to eq '1'
+      Timeout.timeout(5) do
+        sleep 0.1 while server.running?
+      end
     end
+
+    plugin_path = File.expand_path('../..', __FILE__)
+    vim.command "set rtp^=#{plugin_path}"
+    vim.command "set filetype=python"
+
+    def shiftwidth
+      @shiftwidth ||= vim.echo("exists('*shiftwidth') ? shiftwidth() : &sw").to_i
+    end
+    def tabstop
+      @tabstop ||= vim.echo("&tabstop").to_i
+    end
+    def indent
+      vim.echo("indent('.')").to_i
+    end
+    def previous_indent
+      pline = vim.echo("line('.')").to_i - 1
+      vim.echo("indent('#{pline}')").to_i
+    end
+    def proposed_indent
+      line = vim.echo("line('.')")
+      col = vim.echo("col('.')")
+      indent_value = vim.echo("GetPythonPEPIndent(#{line})").to_i
+      vim.command("call cursor(#{line}, #{col})")
+      return indent_value
+    end
+    def multiline_indent(prev, default)
+      i = vim.echo("get(g:, 'python_pep8_indent_multiline_string', 0)").to_i
+      return (i == -2 ? default : i), i < 0 ? (i == -1 ? prev : default) : i
+    end
+    def hang_closing
+      i = vim.echo("get(g:, 'python_pep8_indent_hang_closing', 0)").to_i
+      return (i != 0)
+    end
+    def set_hang_closing(value)
+      i = value ? 1 : 0
+      vim.command("let g:python_pep8_indent_hang_closing=#{i}")
+    end
+
+    vim
   end
 end
